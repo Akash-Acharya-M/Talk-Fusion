@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TALK FUSION</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@200..1000&display=swap" rel="stylesheet">
+
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            font-family: 'Helvetica', 'Arial', sans-serif; /* Modern font stack */
+            overflow: hidden;
+            background-color: #1c1c1e7c;
+        }
+
+        /* Background Video */
+        video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }
+
+        .content-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: #33333349;
+        }
+
+        .title {
+            font-size: 8rem; /* Increased font size */
+            font-family: 'Playfair Display', serif;
+            margin-bottom: 50px; /* Reduced the bottom margin to bring it up */
+            color: #f2f1f1;
+            position: relative;
+            top: -30px; /* Moved the title slightly higher */
+        }
+
+        .mic-button {
+            background: #8e8e8e;
+            border: none;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            font-size: 2rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .mic-button.idle {
+            animation: none;
+        }
+
+        .mic-button.listening {
+            animation: pulse 1.5s infinite;
+            background: black;
+        }
+
+        .mic-button.processing {
+            animation: pulse 1.5s infinite;
+            background: black;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            }
+
+            50% {
+                transform: scale(1.1);
+                box-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            }
+
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+            }
+        }
+
+        .status-text {
+            margin-top: 15px;
+            font-size: 1.5rem;
+            text-align: center;
+            max-width: 80%;
+            line-height: 1.6;
+            word-wrap: break-word;
+            padding: 0 20px;
+            color: #f0e7e7;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 1s forwards;
+        }
+
+        /* Conversation History */
+        .history {
+            position: absolute;
+            bottom: 60px;
+            right: 20px;
+            max-height: 300px;
+            width: 250px;
+            overflow-y: scroll;
+            background: rgba(240, 238, 238, 0.114);
+            padding: 10px;
+            color: #d1d1d1;
+            font-size: 0.9rem;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .history .message {
+            margin-bottom: 10px;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.5s forwards;
+        }
+
+        .history .user-msg {
+            color: #a3d9a5;
+            font-weight: bold;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .history .ai-msg {
+            color: #c0c0c0;
+            font-weight: normal;
+            font-family: 'Nunito', sans-serif; /* Use Nunito font for AI messages */
+        }
+
+        .history-toggle {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: white;
+            cursor: pointer;
+            font-size: 1.2rem;
+            background: rgba(0, 0, 0, 0.6);
+            border: none;
+            padding: 5px 10px;
+            border-radius: 20px;
+            transition: background 0.3s ease;
+        }
+
+        .history-toggle:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        /* Reset button - bottom left corner */
+        #reset-button {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: #8e8e8e;
+            border: none;
+            border-radius: 50%;
+            width: 57px;
+            height: 57px;
+            font-size: 2rem;
+            color: rgb(59, 56, 56);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        #reset-button:hover {
+            background: #333;
+        }
+
+        /* Fade-in and slide-up animations */
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Video -->
+    <video autoplay loop muted playsinline>
+        <source src="background.mp4" type="video/mp4">
+    </video>
+    
+    <div class="content-container">
+        <h1 class="title">TALK FUSION</h1>
+        <button id="mic-button" class="mic-button idle">🎙</button>
+        <p id="status-text" class="status-text">Press the mic to start</p>
+    </div>
+
+    <!-- Conversation History Display -->
+    <div id="history" class="history"></div>
+    <div id="history-toggle" class="history-toggle">History</div>
+
+    <!-- Reset Button -->
+    <button id="reset-button">🔄</button>
+
+    <script>
+        const micButton = document.getElementById("mic-button");
+        const resetButton = document.getElementById("reset-button"); // Reset button
+        const statusText = document.getElementById("status-text");
+        const historyDiv = document.getElementById("history");
+        const historyToggle = document.getElementById("history-toggle");
+
+        let conversationHistory = [];
+        let recognition; // Declare recognition globally to stop it when needed
+
+        const stopSpeaking = () => {
+            if (speechSynthesis.speaking) {
+                speechSynthesis.cancel(); // Stop any ongoing speech
+            }
+        };
+
+        const speak = (text) => {
+            const utterance = new SpeechSynthesisUtterance(text);
+            speechSynthesis.speak(utterance);
+        };
+
+        const updateHistory = () => {
+            historyDiv.innerHTML = ''; 
+            conversationHistory.forEach(item => {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message');
+                if (item.sender === 'user') {
+                    messageDiv.classList.add('user-msg');
+                } else {
+                    messageDiv.classList.add('ai-msg');
+                }
+                messageDiv.textContent = item.text;
+                historyDiv.appendChild(messageDiv);
+            });
+            historyDiv.scrollTop = historyDiv.scrollHeight;
+        };
+
+        micButton.addEventListener("click", () => {
+            stopSpeaking(); // Stop any ongoing speech when mic is pressed
+            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition.lang = "en-US";
+            recognition.interimResults = false;
+            recognition.maxAlternatives = 1;
+
+            micButton.classList.remove('idle');
+            micButton.classList.add('listening');
+            statusText.textContent = "Listening...";
+            recognition.start();
+
+            recognition.onresult = (event) => {
+                const userInput = event.results[0][0].transcript;
+                statusText.textContent = You said: "${userInput}";
+
+                conversationHistory.push({ sender: 'user', text: You: ${userInput} });
+                updateHistory();
+
+                fetch("http://127.0.0.1:5000/process_audio", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ text: userInput, history: conversationHistory })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.response) {
+                        micButton.classList.remove('listening');
+                        micButton.classList.add('processing');
+                        statusText.textContent = AI: ${data.response};
+                        speak(data.response);
+                        conversationHistory.push({ sender: 'ai', text: AI: ${data.response} });
+                        updateHistory();
+                    } else if (data.error) {
+                        statusText.textContent = Error: ${data.error};
+                    } else {
+                        statusText.textContent = "Unexpected response from the server.";
+                    }
+                })
+                .catch(err => {
+                    console.error("Fetch error:", err);
+                    statusText.textContent = "Error communicating with the server.";
+                });
+            };
+
+            recognition.onerror = (err) => {
+                console.error("Speech recognition error:", err);
+                statusText.textContent = "Speech recognition failed.";
+            };
+        });
+
+        resetButton.addEventListener("click", () => {
+            stopSpeaking(); // Stop ongoing speech
+            if (recognition) {
+                recognition.stop(); // Stop speech recognition
+            }
+            conversationHistory = []; // Clear conversation history
+            updateHistory(); // Reset history in UI
+            statusText.textContent = "Press the mic to start"; // Reset status text
+            micButton.classList.remove('listening', 'processing');
+            micButton.classList.add('idle');
+        });
+
+        historyToggle.addEventListener("click", () => {
+            if (historyDiv.style.display === "none" || historyDiv.style.display === "") {
+                historyDiv.style.display = "block";
+                setTimeout(() => historyDiv.style.opacity = 1, 10); // Trigger fade-in animation
+            } else {
+                historyDiv.style.opacity = 0;
+                setTimeout(() => historyDiv.style.display = "none", 300); // Wait for fade-out animation before hiding
+            }
+        });
+        
+    // Check if the user is asking for their location
+    if (userInput.toLowerCase().includes("where am i") || userInput.toLowerCase().includes("my location") || userInput.toLowerCase().includes("location")) {
+        // Check if geolocation is available
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                // Get the latitude and longitude
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+    
+                // Prepare a location string to return to the user
+                const locationMessage = Your current location is Latitude: ${latitude}, Longitude: ${longitude}.;
+    
+                // Display the response and update the conversation history
+                statusText.textContent = locationMessage;
+                speak(locationMessage);
+    
+                conversationHistory.push({ sender: 'ai', text: AI: ${locationMessage} });
+                updateHistory();
+            }, function(error) {
+                // Handle errors (e.g., user denies location access)
+                statusText.textContent = "Unable to retrieve your location. Please grant location access.";
+                speak("Unable to retrieve your location. Please grant location access.");
+            });
+        } else {
+            // Geolocation is not supported in the browser
+            statusText.textContent = "Geolocation is not supported by your browser.";
+            speak("Geolocation is not supported by your browser.");
+        }
+    } else {
+        // Continue with other requests
+        fetch("http://127.0.0.1:5000/process_audio", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text: userInput, history: conversationHistory })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.response) {
+                micButton.classList.remove('listening');
+                micButton.classList.add('processing');
+                statusText.textContent = AI: ${data.response};
+                speak(data.response);
+                conversationHistory.push({ sender: 'ai', text: AI: ${data.response} });
+                updateHistory();
+            } else if (data.error) {
+                statusText.textContent = Error: ${data.error};
+            } else {
+                statusText.textContent = "Unexpected response from the server.";
+            }
+        })
+        .catch(err => {
+            console.error("Fetch error:", err);
+            statusText.textContent = "Error communicating with the server.";
+        });
+    }
+    </script>
+</body>
+</html>
