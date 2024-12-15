@@ -1,0 +1,1 @@
+Talk Fusion is an attemp to make AI interactions much more interesting and human like voice to voice communication. Intall all required python libraries and make sure to add your chatbot API key with necessay changes and host the webpage locally.
